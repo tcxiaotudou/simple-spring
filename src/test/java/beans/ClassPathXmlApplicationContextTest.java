@@ -6,7 +6,7 @@ import org.junit.Test;
 public class ClassPathXmlApplicationContextTest {
 
     @Test
-    public void testClassPathXmlApplicationContext() {
+    public void testClassPathXmlApplicationContext() throws Exception {
         ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("beans.xml");
         AService aService = (AService) ctx.getBean("aservice");
         aService.sayHello();

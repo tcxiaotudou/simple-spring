@@ -1,61 +1,34 @@
 package cn.fciasth.context;
 
 import cn.fciasth.beans.BeanDefinition;
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
-
-import java.net.URL;
-import java.util.*;
+import cn.fciasth.beans.BeanFactory;
+import cn.fciasth.beans.SimpleBeanFactory;
+import cn.fciasth.beans.XmlBeanDefinitionReader;
+import cn.fciasth.core.ClassPathXmlResource;
+import cn.fciasth.core.Resource;
 
 /**
  * @author fciasth
  */
-public class ClassPathXmlApplicationContext {
+public class ClassPathXmlApplicationContext implements BeanFactory {
 
-    private List<BeanDefinition> beanDefinitions = new ArrayList<>();
-
-    private Map<String, Object> singletons = new HashMap<>();
-
+    BeanFactory beanFactory;
 
     public ClassPathXmlApplicationContext(String fileName) {
-        this.readXml(fileName);
-        this.instanceBeans();
+        Resource resource = new ClassPathXmlResource(fileName);
+        BeanFactory beanFactory = new SimpleBeanFactory();
+        XmlBeanDefinitionReader xmlBeanDefinitionReader = new XmlBeanDefinitionReader(beanFactory);
+        xmlBeanDefinitionReader.loadBeanDefinitions(resource);
+        this.beanFactory = beanFactory;
     }
 
-    private void readXml(String fileName) {
-        SAXReader saxReader = new SAXReader();
-        try {
-            URL xmlPath = this.getClass().getClassLoader().getResource(fileName);
-            Document document = saxReader.read(xmlPath);
-            Element rootElement = document.getRootElement();
-            // 解析xml中的bean信息
-            for (Element element : rootElement.elements()) {
-                String beanId = element.attributeValue("id");
-                String beanClassName = element.attributeValue("class");
-                BeanDefinition beanDefinition = new BeanDefinition(beanId, beanClassName);
-                // 存到beanDefinitions中
-                beanDefinitions.add(beanDefinition);
-            }
-        } catch (DocumentException e) {
-            throw new RuntimeException(e);
-        }
+    @Override
+    public Object getBean(String beanName) throws Exception {
+        return beanFactory.getBean(beanName);
     }
 
-    // 反射创建实例
-    private void instanceBeans() {
-        for (BeanDefinition beanDefinition : beanDefinitions) {
-            try {
-                singletons.put(beanDefinition.getId(), Class.forName(beanDefinition.getClassName()).newInstance());
-            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    // 对外获取bean
-    public Object getBean(String beanName) {
-        return singletons.get(beanName);
+    @Override
+    public void registerBeanDefinition(BeanDefinition beanDefinition) {
+        beanFactory.registerBeanDefinition(beanDefinition);
     }
 }
